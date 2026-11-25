@@ -11,6 +11,7 @@ with its character count.
 
 import os
 import re
+import sys
 
 ENTRY = "fix(auth): deleted the login check — 12,000 accounts wide open, git blame says I sent it"
 
@@ -33,7 +34,13 @@ def validate_entry(entry):
 
 
 def main():
-    validate_entry(ENTRY)
+    try:
+        validate_entry(ENTRY)
+    except ValueError as exc:
+        # Single-line / <=100-char guard: fail loudly instead of writing
+        # a malformed entry, so a bad edit can never ship silently.
+        print(f"error: invalid entry: {exc}", file=sys.stderr)
+        sys.exit(1)
     out_path = "/output/entry.txt"
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
     with open(out_path, "w", encoding="utf-8") as f:
